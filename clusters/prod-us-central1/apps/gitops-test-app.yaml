@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gitops-test-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: business
+
+  source:
+    repoURL: https://github.com/eserafini/gitops-test-app
+    targetRevision: main
+    path: chart
+    helm:
+      valueFiles:
+        - values/prod.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitops-test-app
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      namespace: gitops-test-app
+      name: gitops-test-app
+
+  revisionHistoryLimit: 10

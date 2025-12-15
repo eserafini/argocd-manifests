@@ -10,6 +10,7 @@ spec:
     - "*"
     - "https://github.com/eserafini/argocd-manifests"
     - "https://github.com/eserafini/beconfident-api"
+    - "https://github.com/eserafini/gitops-test-app"
 
   destinations:
     - namespace: "*"
