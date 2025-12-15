@@ -9,7 +9,7 @@ spec:
   project: business
 
   source:
-    repoURL: https://github.com/beconfident-ai/beconfident-api
+    repoURL: https://github.com/eserafini/beconfident-api
     targetRevision: main
     path: k8s
 

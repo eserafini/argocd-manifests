@@ -7,7 +7,9 @@ spec:
   description: Business applications
 
   sourceRepos:
-    - https://github.com/beconfident-ai/beconfident-api
+    - "*"
+    - "https://github.com/eserafini/argocd-manifests"
+    - "https://github.com/eserafini/beconfident-api"
 
   destinations:
     - namespace: "*"

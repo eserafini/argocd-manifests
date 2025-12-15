@@ -9,7 +9,7 @@ spec:
   project: business
 
   source:
-    repoURL: https://github.com/beconfident-ai/argocd-manifests
+    repoURL: https://github.com/eserafini/argocd-manifests
     targetRevision: HEAD
     path: clusters/prod-us-central1/apps
 
