@@ -1,9 +1,7 @@
-.PHONY: help bootstrap check status clean setup-github-app
+.PHONY: help bootstrap check status clean refresh
 
 ARGOCD_NS ?= argocd
 BOOTSTRAP_DIR = bootstrap
-GITHUB_REPO_URL ?= https://github.com/eserafini/gitops-test-app
-GITHUB_SECRET_NAME ?= github-gitops-test-app
 
 help: ## Mostra comandos disponíveis
 	@echo "ArgoCD Manifests - Comandos disponíveis:"
@@ -33,12 +31,8 @@ bootstrap: check ## Aplica recursos de bootstrap (AppProjects + Application raiz
 	@echo "Bootstrap concluído"
 	@echo ""
 	@echo "Próximos passos:"
-	@echo "  1. Configure autenticação GitHub App:"
-	@echo "     make setup-github-app GITHUB_APP_ID=xxx GITHUB_APP_INSTALLATION_ID=xxx GITHUB_APP_PRIVATE_KEY_PATH=/path/to/key.pem"
-	@echo "  2. Faça commit e push para o repositório Git"
-	@echo "  3. O ArgoCD sincronizará automaticamente"
-	@echo ""
-	@echo "Ver documentação: docs/GITHUB_APP_SETUP.md"
+	@echo "  1. Faça commit e push para o repositório Git"
+	@echo "  2. O ArgoCD sincronizará automaticamente"
 	@echo ""
 	@echo "Verifique o status: make status"
 
@@ -48,9 +42,22 @@ status: ## Mostra status dos AppProjects e Applications
 	@echo ""
 	@echo "Applications:"
 	@kubectl get applications -n $(ARGOCD_NS) || true
-	@echo ""
-	@echo "Secrets de repositório:"
-	@kubectl get secrets -n $(ARGOCD_NS) -l argocd.argoproj.io/secret-type=repository || true
+
+refresh: check ## Força refresh de uma Application (use: make refresh APP=gitops-test-app)
+	@if [ -z "$(APP)" ]; then \
+		echo "Erro: APP não fornecido"; \
+		echo ""; \
+		echo "Uso: make refresh APP=<nome-da-application>"; \
+		echo "Exemplo: make refresh APP=gitops-test-app"; \
+		exit 1; \
+	fi
+	@echo "Forçando refresh hard da Application '$(APP)'..."
+	@kubectl patch application $(APP) -n $(ARGOCD_NS) \
+		--type merge \
+		-p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}' || \
+		(echo "Erro: Application '$(APP)' não encontrada. Verifique com 'make status'"; exit 1)
+	@echo "✅ Refresh hard solicitado para '$(APP)'"
+	@echo "Aguarde alguns segundos e verifique: make status"
 
 clean: ## Remove recursos de bootstrap
 	@echo "ATENÇÃO: Isso vai remover todos os recursos de bootstrap!"
@@ -63,48 +70,3 @@ clean: ## Remove recursos de bootstrap
 	else \
 		echo "Operação cancelada"; \
 	fi
-
-setup-github-app: check ## Configura GitHub App (RECOMENDADO) - use: make setup-github-app GITHUB_APP_ID=xxx GITHUB_APP_INSTALLATION_ID=xxx GITHUB_APP_PRIVATE_KEY_PATH=/path/to/key.pem
-	@if [ -z "$(GITHUB_APP_ID)" ] || [ -z "$(GITHUB_APP_INSTALLATION_ID)" ] || [ -z "$(GITHUB_APP_PRIVATE_KEY_PATH)" ]; then \
-		echo "Erro: Parâmetros obrigatórios não fornecidos"; \
-		echo ""; \
-		echo "Uso: make setup-github-app \\"; \
-		echo "  GITHUB_APP_ID=<app_id> \\"; \
-		echo "  GITHUB_APP_INSTALLATION_ID=<installation_id> \\"; \
-		echo "  GITHUB_APP_PRIVATE_KEY_PATH=/path/to/private-key.pem \\"; \
-		echo "  GITHUB_REPO_URL=$(GITHUB_REPO_URL)"; \
-		echo ""; \
-		echo "Para criar um GitHub App:"; \
-		echo "  1. Acesse: https://github.com/settings/apps/new"; \
-		echo "  2. Configure permissões (Contents: Read-only)"; \
-		echo "  3. Instale o App nos repositórios necessários"; \
-		echo "  4. Gere uma private key e baixe"; \
-		echo "  5. Anote o App ID e Installation ID"; \
-		echo ""; \
-		echo "Ver documentação completa: docs/GITHUB_APP_SETUP.md"; \
-		exit 1; \
-	fi
-	@if [ ! -f "$(GITHUB_APP_PRIVATE_KEY_PATH)" ]; then \
-		echo "Erro: Arquivo de chave privada não encontrado: $(GITHUB_APP_PRIVATE_KEY_PATH)"; \
-		exit 1; \
-	fi
-	@echo "Configurando GitHub App no ArgoCD..."
-	@kubectl delete secret $(GITHUB_SECRET_NAME) -n $(ARGOCD_NS) 2>/dev/null || true
-	@kubectl create secret generic $(GITHUB_SECRET_NAME) \
-		--from-literal=type=git \
-		--from-literal=url=$(GITHUB_REPO_URL) \
-		--from-literal=githubAppID="$(GITHUB_APP_ID)" \
-		--from-literal=githubAppInstallationID="$(GITHUB_APP_INSTALLATION_ID)" \
-		--from-file=githubAppPrivateKey="$(GITHUB_APP_PRIVATE_KEY_PATH)" \
-		-n $(ARGOCD_NS)
-	@kubectl label secret $(GITHUB_SECRET_NAME) argocd.argoproj.io/secret-type=repository -n $(ARGOCD_NS) --overwrite
-	@echo "✅ GitHub App configurado!"
-	@echo "   App ID: $(GITHUB_APP_ID)"
-	@echo "   Installation ID: $(GITHUB_APP_INSTALLATION_ID)"
-	@echo "   Repositório: $(GITHUB_REPO_URL)"
-	@echo ""
-	@echo "Reiniciando pods do ArgoCD..."
-	@kubectl delete pod -n $(ARGOCD_NS) -l app.kubernetes.io/name=argocd-repo-server 2>/dev/null || true
-	@kubectl delete pod -n $(ARGOCD_NS) -l app.kubernetes.io/name=argocd-application-controller 2>/dev/null || true
-	@echo ""
-	@echo "Aguarde alguns segundos e verifique: make status"

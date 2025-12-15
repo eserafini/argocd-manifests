@@ -30,7 +30,7 @@ spec:
     path: helm
     helm:
       valueFiles:
-        - helm/values/preview/values.yaml
+        - values/preview/values.yaml
       parameters:
         - name: image.tag
           value: { { IMAGE_TAG } }
