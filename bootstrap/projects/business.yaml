@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: business
+  namespace: argocd
+spec:
+  description: Business applications
+
+  sourceRepos:
+    - https://github.com/beconfident-ai/beconfident-api
+
+  destinations:
+    - namespace: "*"
+      server: "*"
+
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+
+  roles: []
