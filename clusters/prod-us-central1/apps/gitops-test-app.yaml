@@ -11,10 +11,10 @@ spec:
   source:
     repoURL: https://github.com/eserafini/gitops-test-app
     targetRevision: main
-    path: chart
+    path: helm
     helm:
       valueFiles:
-        - values/prod.yaml
+        - helm/values/prod/values.yaml
 
   destination:
     server: https://kubernetes.default.svc

@@ -27,10 +27,10 @@ spec:
   source:
     repoURL: https://github.com/eserafini/{{APP_NAME}}
     targetRevision: { { TARGET_REVISION } }
-    path: chart
+    path: helm
     helm:
       valueFiles:
-        - values/preview.yaml
+        - helm/values/preview/values.yaml
       parameters:
         - name: image.tag
           value: { { IMAGE_TAG } }
