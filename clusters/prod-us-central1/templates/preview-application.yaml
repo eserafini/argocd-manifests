@@ -27,23 +27,20 @@ spec:
   source:
     repoURL: https://github.com/eserafini/{{APP_NAME}}
     targetRevision: {{TARGET_REVISION}}
-    path: helm
+    path: k8s/charts/gitops-test-app
     helm:
       valueFiles:
         - values/preview/values.yaml
       parameters:
+        # Apenas parâmetros dinâmicos que mudam por PR
         - name: image.tag
           value: {{IMAGE_TAG}}
-        - name: replicaCount
-          value: "1"
-        - name: resources.requests.memory
-          value: "256Mi"
-        - name: resources.requests.cpu
-          value: "100m"
-        - name: resources.limits.memory
-          value: "512Mi"
-        - name: resources.limits.cpu
-          value: "500m"
+        - name: ingress.hosts[0].host
+          value: "pr-{{PR_NUMBER}}.gitops-test-app.136.113.78.99.nip.io"
+        - name: ingress.tls[0].secretName
+          value: "pr-{{PR_NUMBER}}-gitops-test-app-tls"
+        - name: ingress.tls[0].hosts[0]
+          value: "pr-{{PR_NUMBER}}.gitops-test-app.136.113.78.99.nip.io"
 
   destination:
     server: https://kubernetes.default.svc
