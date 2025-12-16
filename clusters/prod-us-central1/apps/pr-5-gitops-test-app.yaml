@@ -1,0 +1,67 @@
+# Template para Application de Preview (PR Environments)
+# Este arquivo é usado como base pelo GitHub Actions para gerar Applications dinâmicas
+#
+# Variáveis que serão substituídas pelo CI:
+# - PR_NUMBER: Número da PR (ex: 42)
+# - IMAGE_TAG: Tag da imagem Docker (ex: pr-42-abc123)
+# - TARGET_REVISION: Branch da PR (ex: feature/new-feature)
+# - APP_NAME: Nome da aplicação (ex: gitops-test-app)
+#
+# Arquivo gerado: clusters/prod-us-central1/apps/pr-<PR_NUMBER>-<APP_NAME>.yaml
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pr-5-gitops-test-app
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: gitops-test-app
+    app.kubernetes.io/instance: pr-5
+    preview: "true"
+    pr-number: "5"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: business
+
+  source:
+    repoURL: https://github.com/eserafini/gitops-test-app
+    targetRevision: feature/test-ops
+    path: helm
+    helm:
+      valueFiles:
+        - values/preview/values.yaml
+      parameters:
+        - name: image.tag
+          value: pr-5-aa461ae5
+        - name: replicaCount
+          value: "1"
+        - name: resources.requests.memory
+          value: "256Mi"
+        - name: resources.requests.cpu
+          value: "100m"
+        - name: resources.limits.memory
+          value: "512Mi"
+        - name: resources.limits.cpu
+          value: "500m"
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: pr-5
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      namespace: pr-5
+      name: { { APP_NAME } }
+
+  revisionHistoryLimit: 3
