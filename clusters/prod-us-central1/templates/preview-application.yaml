@@ -15,7 +15,7 @@ metadata:
   name: pr-{{PR_NUMBER}}-{{APP_NAME}}
   namespace: argocd
   labels:
-    app.kubernetes.io/name: { { APP_NAME } }
+    app.kubernetes.io/name: {{APP_NAME}}
     app.kubernetes.io/instance: pr-{{PR_NUMBER}}
     preview: "true"
     pr-number: "{{PR_NUMBER}}"
@@ -26,14 +26,14 @@ spec:
 
   source:
     repoURL: https://github.com/eserafini/{{APP_NAME}}
-    targetRevision: { { TARGET_REVISION } }
+    targetRevision: {{TARGET_REVISION}}
     path: helm
     helm:
       valueFiles:
         - values/preview/values.yaml
       parameters:
         - name: image.tag
-          value: { { IMAGE_TAG } }
+          value: {{IMAGE_TAG}}
         - name: replicaCount
           value: "1"
         - name: resources.requests.memory
