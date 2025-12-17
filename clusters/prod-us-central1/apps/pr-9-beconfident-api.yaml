@@ -28,11 +28,10 @@ spec:
 
   source:
     # Helm OCI: ArgoCD puxa o chart do Artifact Registry (não clona o repo da app)
-    repoURL: oci://us-central1-docker.pkg.dev/projeto1-53600/beconfident-api-charts
+    repoURL: us-central1-docker.pkg.dev/projeto1-53600/beconfident-api-charts
     chart: beconfident-api
     targetRevision: 0.0.0-pr-9-027cf339
     helm:
-      enableOCI: true
       valueFiles:
         - values/preview/values.yaml
       parameters:

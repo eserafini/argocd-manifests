@@ -32,7 +32,6 @@ spec:
     chart: beconfident-api
     targetRevision: {{CHART_VERSION}}
     helm:
-      enableOCI: true
       valueFiles:
         - values/preview/values.yaml
       parameters:
