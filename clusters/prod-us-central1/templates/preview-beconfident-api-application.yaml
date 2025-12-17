@@ -1,0 +1,74 @@
+# Template para Application de Preview (PR Environments) - beconfident-api
+# Este arquivo é usado como base pelo GitHub Actions para gerar Applications dinâmicas
+#
+# Variáveis que serão substituídas pelo CI:
+# - PR_NUMBER: Número da PR (ex: 42)
+# - IMAGE_TAG: Tag da imagem Docker (ex: pr-42-abc123)
+# - IMAGE_REPOSITORY: Repository da imagem Docker (ex: us-east1-docker.pkg.dev/beconfident-api-staging/...)
+# - CHART_REPO_URL: Repo OCI do Helm Chart (ex: oci://us-east1-docker.pkg.dev/<project>/beconfident-api-charts)
+# - CHART_VERSION: Versão/tag do chart (ex: pr-42-abc123)
+# - APP_NAME: Nome da aplicação (ex: beconfident-api)
+#
+# Arquivo gerado: clusters/prod-us-central1/apps/pr-<PR_NUMBER>-<APP_NAME>.yaml
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pr-{{PR_NUMBER}}-{{APP_NAME}}
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: {{APP_NAME}}
+    app.kubernetes.io/instance: pr-{{PR_NUMBER}}
+    preview: "true"
+    pr-number: "{{PR_NUMBER}}"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: business
+
+  source:
+    # Helm OCI: ArgoCD puxa o chart do Artifact Registry (não clona o repo da app)
+    repoURL: {{CHART_REPO_URL}}
+    chart: beconfident-api
+    targetRevision: {{CHART_VERSION}}
+    helm:
+      enableOCI: true
+      valueFiles:
+        - values/preview/values.yaml
+      parameters:
+        # Parâmetros dinâmicos que mudam por PR
+        - name: image.repository
+          value: {{IMAGE_REPOSITORY}}
+        - name: image.tag
+          value: {{IMAGE_TAG}}
+        - name: ingress.hosts[0].host
+          value: "pr-{{PR_NUMBER}}.beconfident-api.136.113.78.99.nip.io"
+        - name: ingress.tls[0].secretName
+          value: "pr-{{PR_NUMBER}}-beconfident-api-tls"
+        - name: ingress.tls[0].hosts[0]
+          value: "pr-{{PR_NUMBER}}.beconfident-api.136.113.78.99.nip.io"
+        - name: mongodb.databaseName
+          value: "confident-v2-api-pr-{{PR_NUMBER}}"
+        - name: dbInitJob.sourceMongoURI
+          value: ""  # Deixado vazio - use scripts/copy-db-to-pr.sh para copiar do MongoDB local
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: pr-{{PR_NUMBER}}
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      namespace: pr-{{PR_NUMBER}}
+      name: beconfident-api
+
+  revisionHistoryLimit: 3

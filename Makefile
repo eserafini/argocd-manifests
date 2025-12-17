@@ -31,8 +31,9 @@ bootstrap: check
 	@echo "Bootstrap completed"
 	@echo ""
 	@echo "Next steps:"
-	@echo "  1. Commit and push to Git repository"
-	@echo "  2. ArgoCD will synchronize automatically"
+	@echo "  1. Configure repository secret for private repos (if needed)"
+	@echo "  2. Commit and push to Git repository"
+	@echo "  3. ArgoCD will synchronize automatically"
 	@echo ""
 	@echo "Check status: make status"
 
