@@ -30,7 +30,7 @@ spec:
     # Helm OCI: ArgoCD puxa o chart do Artifact Registry (não clona o repo da app)
     repoURL: us-central1-docker.pkg.dev/projeto1-53600/beconfident-api-charts
     chart: beconfident-api
-    targetRevision: 0.0.0-pr-11-49badf01
+    targetRevision: 0.0.0-pr-11-5fc6c27e
     helm:
       valueFiles:
         - values/preview/values.yaml
@@ -39,7 +39,7 @@ spec:
         - name: image.repository
           value: us-central1-docker.pkg.dev/projeto1-53600/beconfident-api-images/beconfident-api-preview
         - name: image.tag
-          value: pr-11-49badf01
+          value: pr-11-5fc6c27e
         - name: ingress.hosts[0].host
           value: "pr-11.beconfident-api.136.113.78.99.nip.io"
         - name: ingress.tls[0].secretName
